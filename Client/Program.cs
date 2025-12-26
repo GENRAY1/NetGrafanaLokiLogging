@@ -1,4 +1,14 @@
+using Serilog;
+
 var builder = WebApplication.CreateBuilder(args);
+ 
+Log.Logger = new LoggerConfiguration()
+   .ReadFrom.Configuration(builder.Configuration)
+   .Enrich.WithProperty("Application", builder.Environment.ApplicationName)
+   .Enrich.WithProperty("Environment", builder.Environment.EnvironmentName)
+   .CreateLogger();
+
+builder.Host.UseSerilog();
 
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
@@ -8,7 +18,37 @@ var app = builder.Build();
 app.UseSwagger();
 app.UseSwaggerUI();
 
-app.MapGet("/test", () => Results.Ok("HW"))
-    .WithName("Test");
+app.MapGet("/generate-random-logs", async (int count, ILogger<Program> logger) =>
+{
+   if (count <= 0 || count > 10000)
+      return Results.BadRequest("Count must be between 1 and 10000");
+   
+   Random random = new();
+   Guid userId = Guid.NewGuid();  
+   
+   
+   for (int i = 0; i < count; i++)
+   {
+      DateTime dateTime = DateTime.UtcNow;
+      
+      var level = random.Next(1, 4);
+      switch (level)
+      {
+         case 1:
+            logger.LogInformation("User {UserId} performed at {DateTime}", userId, dateTime);
+            break;
+         case 2:
+            logger.LogWarning("User {UserId} had warning at {Timestamp}", userId, dateTime);
+            break;
+         case 3:
+            logger.LogError("User {UserId} caused error at {Timestamp}", userId, dateTime);
+            break;
+      }
+      
+      await Task.Delay(10);
+   }
+   
+   return Results.Ok();
+});
 
 app.Run();
