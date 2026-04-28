@@ -3,12 +3,11 @@ using Serilog.Events;
 
 namespace Client.Logging;
 
-public sealed class RemoveHttpScopePropertiesEnricher : ILogEventEnricher
+public sealed class RemovePropertiesEnricher : ILogEventEnricher
 {
     private static readonly string[] PropertyNames =
     [
         "RequestId",
-        "RequestPath",
         "ConnectionId"
     ];
 

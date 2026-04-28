@@ -6,6 +6,9 @@ services:
     ports:
       - "5000:8080"
     environment:
+      - Serilog__MinimumLevel__Default=Information
+      - Serilog__MinimumLevel__Override__Microsoft=Warning
+      - Serilog__MinimumLevel__Override__System=Warning
       - Serilog__WriteTo__1__Args__uri=http://loki:3100
       - Serilog__WriteTo__1__Args__labels__0__key=product
       - Serilog__WriteTo__1__Args__labels__0__value=my_product_2
