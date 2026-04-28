@@ -2,6 +2,7 @@ using System.Net;
 using Client;
 using Client.Errors;
 using Client.ExceptionHandlers;
+using Client.Extensions;
 using Serilog;
 using Client.Logging;
 using FluentResults;
@@ -26,9 +27,6 @@ var app = builder.Build();
 
 app.UseMiddleware<RequestLogContextMiddleware>();
 app.UseExceptionHandler();
-
-
-
 app.UseSwagger();
 app.UseSwaggerUI();
 
@@ -61,15 +59,16 @@ app.MapPost("/generate-random-logs", async (int count, ILogger<Program> logger) 
     return Results.Ok();
 });
 
-app.MapPost("/result-error", async () =>
+app.MapPost("/result-fail", async (ILogger<Program> logger) =>
 {
+    var err1 = new ApiError("message 1", "Error.OperationFailed");
+    var err2 = new ApiError("message 2", "Error.OperationFailed2");
+    
     Result operationResult = 
-        Result.Fail(new ApiError("Operation failed", "Error.OperationFailed"));
+        Result.Fail(err1).WithError(err2);
 
     if (operationResult.IsFailed)
-    {
-        return Results.BadRequest(operationResult.Errors);    
-    }
+        return operationResult.Errors.ToHttpErrorResponse(logger);    
     
     return Results.Ok();   
 });
