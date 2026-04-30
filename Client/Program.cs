@@ -9,14 +9,13 @@ using FluentResults;
 
 var builder = WebApplication.CreateBuilder(args);
 
-Log.Logger = new LoggerConfiguration()
-    .ReadFrom.Configuration(builder.Configuration)
-    .Enrich.WithProperty("application", builder.Environment.ApplicationName)
-    .Enrich.FromLogContext()
-    .Enrich.With<RemovePropertiesEnricher>()
-    .CreateLogger();
-
-builder.Host.UseSerilog();
+builder.Host.UseSerilog((context, services, config) =>
+{
+    config.ReadFrom.Configuration(context.Configuration)
+        .Enrich.WithProperty("application", builder.Environment.ApplicationName)
+        .Enrich.FromLogContext()
+        .Enrich.With<RemovePropertiesEnricher>();
+});
 
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
@@ -68,7 +67,7 @@ app.MapPost("/result-fail", async (ILogger<Program> logger) =>
         Result.Fail(err1).WithError(err2);
 
     if (operationResult.IsFailed)
-        return operationResult.Errors.ToHttpErrorResponse(logger);    
+        return operationResult.Errors.ToMinimalApiResponse(logger);    
     
     return Results.Ok();   
 });
